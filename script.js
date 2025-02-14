@@ -57,7 +57,7 @@ Estado: ${data.uf || ""}
         const response = await fetch(githubApiUrl, {
             method: "PUT",
             headers: {
-                "Authorization": "token GITHUB_PERSONAL_ACCESS_TOKEN", // Ersetze mit deinem GitHub Token
+                "Authorization": "token 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", // Ersetze mit deinem GitHub Token
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(requestBody),
