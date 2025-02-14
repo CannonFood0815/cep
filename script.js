@@ -18,43 +18,47 @@ async function fetchCEP() {
             return;
         }
 
-        generateFDF(data);
+        saveDataToGitHub(data);
     } catch (error) {
         alert("❌ Fehler: API-Abfrage fehlgeschlagen!");
     }
 }
 
-function generateFDF(data) {
-    const fdfContent = `
-        %FDF-1.2
-        1 0 obj
-        <<
-        /FDF <<
-        /Fields [
-            << /T (Rua) /V (${data.logradouro || ""}) >>
-            << /T (Bairro) /V (${data.bairro || ""}) >>
-            << /T (Cidade) /V (${data.localidade || ""}) >>
-            << /T (Estado) /V (${data.uf || ""}) >>
-        ]
-        >>
-        >>
-        endobj
-        trailer
-        <<
-        /Root 1 0 R
-        >>
-        %%EOF
+async function saveDataToGitHub(data) {
+    const rawData = `
+        Rua: ${data.logradouro || ""}
+        Bairro: ${data.bairro || ""}
+        Cidade: ${data.localidade || ""}
+        Estado: ${data.uf || ""}
     `;
 
-    const blob = new Blob([fdfContent], { type: "application/vnd.fdf" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "cep_data.fdf";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    // GitHub API URL für das Repo (ersetze mit deinem Usernamen & Repo)
+    const githubApiUrl = "https://api.github.com/repos/CannonFood0815/cep/contents/cep_data.txt";
 
-    alert("✅ FDF-Datei wurde erstellt und sollte sich automatisch in Foxit/Adobe öffnen.");
+    const requestBody = {
+        message: "Update CEP-Daten",
+        content: btoa(rawData),  // Base64 kodieren
+        sha: "", // Muss bei Updates angegeben werden (muss vorher ausgelesen werden)
+    };
+
+    try {
+        const response = await fetch(githubApiUrl, {
+            method: "PUT",
+            headers: {
+                "Authorization": "token GITHUB_PERSONAL_ACCESS_TOKEN", // Ersetze mit deinem Token
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestBody),
+        });
+
+        if (response.ok) {
+            alert("✅ CEP-Daten wurden erfolgreich auf GitHub gespeichert!");
+        } else {
+            alert("❌ Fehler beim Speichern der Daten auf GitHub.");
+        }
+    } catch (error) {
+        alert("❌ API-Fehler: " + error.message);
+    }
 }
 
 window.onload = fetchCEP;
