@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEP Abfrage</title>
+    <script>
+        async function fetchCEP() {
+            // Holen der CEP aus der URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const cep = urlParams.get('cep');
+
+            if (!cep || cep.length !== 8) {
+                alert("❌ Fehler: Ungültige CEP!");
+                return;
+            }
+
+            // API-Aufruf zur ViaCEP
+            const apiUrl = `https://viacep.com.br/ws/${cep}/json/`;
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                if (data.erro) {
+                    alert("❌ Fehler: Diese CEP existiert nicht!");
+                    return;
+                }
+                
+                // Senden der Daten zurück ans PDF
+                sendToPDF(data);
+            } catch (error) {
+                alert("❌ Fehler: API-Abfrage fehlgeschlagen!");
+            }
+        }
+
+        function sendToPDF(data) {
+            try {
+                var fields = {
+                    "Rua": data.logradouro || "",
+                    "Bairro": data.bairro || "",
+                    "Cidade": data.localidade || "",
+                    "Estado": data.uf || ""
+                };
+                
+                for (var field in fields) {
+                    var pdfField = this.getField(field);
+                    if (pdfField) {
+                        pdfField.value = fields[field];
+                    }
+                }
+                alert("✅ Adresse erfolgreich ins PDF übertragen!");
+            } catch (error) {
+                alert("❌ Fehler: PDF-Felder konnten nicht gefüllt werden!");
+            }
+        }
+    </script>
+</head>
+<body onload="fetchCEP()">
+    <h1>CEP Abfrage</h1>
+    <p>Die Adresse wird automatisch ins PDF übertragen...</p>
+</body>
+</html>
