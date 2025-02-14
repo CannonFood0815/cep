@@ -6,7 +6,6 @@
     <title>CEP Abfrage</title>
     <script>
         async function fetchCEP() {
-            // Holen der CEP aus der URL
             const urlParams = new URLSearchParams(window.location.search);
             const cep = urlParams.get('cep');
 
@@ -15,43 +14,54 @@
                 return;
             }
 
-            // API-Aufruf zur ViaCEP
             const apiUrl = `https://viacep.com.br/ws/${cep}/json/`;
+
             try {
                 const response = await fetch(apiUrl);
                 const data = await response.json();
-                
+
                 if (data.erro) {
                     alert("❌ Fehler: Diese CEP existiert nicht!");
                     return;
                 }
-                
-                // Senden der Daten zurück ans PDF
-                sendToPDF(data);
+
+                generateFDF(data);
             } catch (error) {
                 alert("❌ Fehler: API-Abfrage fehlgeschlagen!");
             }
         }
 
-        function sendToPDF(data) {
-            try {
-                var fields = {
-                    "Rua": data.logradouro || "",
-                    "Bairro": data.bairro || "",
-                    "Cidade": data.localidade || "",
-                    "Estado": data.uf || ""
-                };
-                
-                for (var field in fields) {
-                    var pdfField = this.getField(field);
-                    if (pdfField) {
-                        pdfField.value = fields[field];
-                    }
-                }
-                alert("✅ Adresse erfolgreich ins PDF übertragen!");
-            } catch (error) {
-                alert("❌ Fehler: PDF-Felder konnten nicht gefüllt werden!");
-            }
+        function generateFDF(data) {
+            const fdfContent = `
+                %FDF-1.2
+                1 0 obj
+                <<
+                /FDF <<
+                /Fields [
+                    << /T (Rua) /V (${data.logradouro || ""}) >>
+                    << /T (Bairro) /V (${data.bairro || ""}) >>
+                    << /T (Cidade) /V (${data.localidade || ""}) >>
+                    << /T (Estado) /V (${data.uf || ""}) >>
+                ]
+                >>
+                >>
+                endobj
+                trailer
+                <<
+                /Root 1 0 R
+                >>
+                %%EOF
+            `;
+
+            const blob = new Blob([fdfContent], { type: "application/vnd.fdf" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "cep_data.fdf";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            alert("✅ Adresse erfolgreich geladen! Datei 'cep_data.fdf' wurde erstellt. Bitte Foxit öffnen.");
         }
     </script>
 </head>
